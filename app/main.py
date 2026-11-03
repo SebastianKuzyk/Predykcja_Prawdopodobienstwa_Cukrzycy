@@ -10,10 +10,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 app = FastAPI(
     title="Predykcja cukrzycy",
-    description=(
-        "Szkielet serwisu, który w kolejnych etapach przyjmie parametry zdrowotne, "
-        "zapisze zapytania i oszacuje ryzyko cukrzycy."
-    ),
+    description="Serwis do szacowania ryzyka cukrzycy na podstawie parametrów zdrowotnych.",
     version="0.1.0",
 )
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")

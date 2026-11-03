@@ -1,18 +1,10 @@
 # System predykcji zachorowania na cukrzycę
 
-Aplikacja webowa szacuje prawdopodobieństwo cukrzycy na podstawie parametrów zdrowotnych, pokazuje wskaźnik ryzyka i zapisuje zapytania w SQLite. Projekt powstaje w pięciu etapach.
+Aplikacja internetowa ma na podstawie podstawowych parametrów zdrowotnych oszacować prawdopodobieństwo cukrzycy i pokazać wynik w przeglądarce.
 
-## Etapy
+W repozytorium jest serwer FastAPI, wspólny układ strony oraz endpoint sprawdzający, czy usługa działa.
 
-1. Szkielet FastAPI, układ strony i endpoint zdrowia.
-2. Formularz parametrów zdrowotnych.
-3. Zapis zapytań w SQLite i historia.
-4. Model uczenia maszynowego i wskaźnik ryzyka.
-5. Testy oraz wdrożenie w Dockerze.
-
-W tym repozytorium jest etap 1.
-
-## Stack etapu 1
+## Technologie
 
 - Python 3.11+
 - FastAPI
