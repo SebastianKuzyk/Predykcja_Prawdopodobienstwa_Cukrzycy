@@ -1,0 +1,32 @@
+:root {
+  --teal: #0f766e;
+  --ink: #1f2933;
+}
+
+body {
+  background: #f3f6f5;
+  color: var(--ink);
+}
+
+.bg-teal {
+  background: var(--teal);
+}
+
+.navbar .nav-link {
+  color: rgba(255, 255, 255, 0.86);
+  text-decoration: none;
+}
+
+.navbar .nav-link.active,
+.navbar .nav-link:hover {
+  color: #fff;
+}
+
+.navbar-brand {
+  font-weight: 650;
+}
+
+.card {
+  border: 0;
+  box-shadow: 0 10px 28px rgba(15, 118, 110, 0.08);
+}
