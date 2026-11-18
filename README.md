@@ -38,11 +38,22 @@ pytest
 
 ## Docker
 
+Obraz jest na Docker Hubie: [skuzyk/predykcja-cukrzycy](https://hub.docker.com/r/skuzyk/predykcja-cukrzycy).
+
+Pobranie i uruchomienie:
+
+```powershell
+docker pull skuzyk/predykcja-cukrzycy
+docker run --rm -p 8000:8000 -v ${PWD}/data:/app/data skuzyk/predykcja-cukrzycy
+```
+
+Aplikacja jest pod adresem http://localhost:8000. Katalog `data` na hoście trzyma historię zapytań.
+
+Żeby zbudować obraz z tego repozytorium zamiast go pobierać:
+
 ```powershell
 docker compose up --build
 ```
-
-Historia zapytań zostaje w katalogu `data/` na hoście. Model powstaje w trakcie budowania obrazu.
 
 ## Struktura
 
