@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Historia zapytań{% endblock %}
+
+{% block content %}
+  <div class="mb-4">
+    <h1 class="h3 mb-2">Historia zapytań</h1>
+    <p class="text-muted mb-0">Ostatnie wpisy z lokalnej bazy SQLite, maksymalnie 200.</p>
+  </div>
+
+  {% if predictions %}
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0 history-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Prawdopodobieństwo</th>
+              <th>Ryzyko</th>
+              <th>Ciąże</th>
+              <th>Glukoza</th>
+              <th>Ciśnienie</th>
+              <th>Fałd</th>
+              <th>Insulina</th>
+              <th>BMI</th>
+              <th>Rodowód</th>
+              <th>Wiek</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in predictions %}
+              <tr>
+                <td class="text-nowrap">{{ row.created_at|format_dt }}</td>
+                <td>
+                  <div class="text-nowrap">{{ "%.1f"|format(row.probability_percent) }}%</div>
+                  <div class="progress mt-1" role="img" aria-label="{{ row.probability_percent }} procent">
+                    <div class="progress-bar {{ row.risk_bar }}" style="width: {{ row.probability_percent }}%"></div>
+                  </div>
+                </td>
+                <td><span class="badge {{ row.risk_badge }}">{{ row.risk_label }}</span></td>
+                <td>{{ row.pregnancies|pretty }}</td>
+                <td>{{ row.glucose|pretty }}</td>
+                <td>{{ row.blood_pressure|pretty }}</td>
+                <td>{{ row.skin_thickness|pretty }}</td>
+                <td>{{ row.insulin|pretty }}</td>
+                <td>{{ row.bmi|pretty }}</td>
+                <td>{{ row.diabetes_pedigree|pretty }}</td>
+                <td>{{ row.age|pretty }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-light border">
+      Brak zapisanych predykcji.
+      <a href="/">Wypełnij formularz</a>, żeby dodać pierwszy wpis.
+    </div>
+  {% endif %}
+{% endblock %}

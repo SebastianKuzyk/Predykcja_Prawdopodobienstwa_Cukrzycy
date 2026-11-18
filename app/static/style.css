@@ -30,3 +30,135 @@ body {
   border: 0;
   box-shadow: 0 10px 28px rgba(15, 118, 110, 0.08);
 }
+
+.btn-teal {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.btn-teal:hover,
+.btn-teal:focus {
+  background: #0c5f59;
+  border-color: #0c5f59;
+  color: #fff;
+}
+
+.gauge {
+  --p: 0;
+  --c: #198754;
+  width: 11.25rem;
+  height: 11.25rem;
+  margin-inline: auto;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), #e6ecea 0);
+  display: grid;
+  place-items: center;
+}
+
+.gauge span {
+  width: 8.15rem;
+  height: 8.15rem;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.history-table {
+  font-size: 0.92rem;
+}
+
+.history-table .progress {
+  min-width: 5.5rem;
+  height: 0.45rem;
+}
+
+.field-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-label .form-label {
+  margin-bottom: 0.35rem;
+}
+
+.info-tip {
+  position: relative;
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.info-tip-button {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 1px solid var(--teal);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--teal);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  padding: 0;
+  cursor: help;
+}
+
+.info-tip-button:hover,
+.info-tip-button:focus-visible {
+  background: var(--teal);
+  color: #fff;
+  outline: 2px solid rgba(15, 118, 110, 0.25);
+  outline-offset: 2px;
+}
+
+.info-tip-panel {
+  display: none;
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  width: min(19rem, 72vw);
+  padding: 0.8rem 0.9rem;
+  background: #fff;
+  color: var(--ink);
+  border-radius: 0.65rem;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+  text-align: left;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.info-tip:hover .info-tip-panel,
+.info-tip:focus-within .info-tip-panel {
+  display: block;
+}
+
+.info-tip-title {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.86rem;
+}
+
+.info-tip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.info-tip-list li + li {
+  margin-top: 0.5rem;
+}
+
+.info-tip-list span {
+  display: block;
+  margin-top: 0.12rem;
+  color: #52606d;
+}

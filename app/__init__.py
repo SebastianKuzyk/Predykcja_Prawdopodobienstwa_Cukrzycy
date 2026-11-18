@@ -1,1 +1,1 @@
-"""Szkielet aplikacji do szacowania ryzyka cukrzycy."""
+"""Aplikacja webowa do szacowania ryzyka cukrzycy."""

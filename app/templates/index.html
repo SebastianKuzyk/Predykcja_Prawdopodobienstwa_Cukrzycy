@@ -1,23 +1,183 @@
 {% extends "base.html" %}
 
-{% block title %}Start{% endblock %}
+{% block title %}Nowa predykcja{% endblock %}
 
 {% block content %}
   <div class="mb-4">
-    <h1 class="h3 mb-2">System predykcji zachorowania na cukrzycę</h1>
+    <h1 class="h3 mb-2">Ryzyko cukrzycy</h1>
     <p class="text-muted mb-0">
-      Aplikacja ma przyjąć podstawowe parametry zdrowotne i oszacować prawdopodobieństwo cukrzycy.
+      Wpisz podstawowe parametry zdrowotne. Model oszacuje prawdopodobieństwo cukrzycy i zapisze to zapytanie.
     </p>
   </div>
 
-  <section class="card">
-    <div class="card-body">
-      <h2 class="h5">Aplikacja</h2>
-      <ul class="mb-0">
-        <li>Serwer FastAPI ze stroną startową.</li>
-        <li>Wspólny układ HTML i Bootstrap.</li>
-        <li>Endpoint <code>/api/health</code>, który sprawdza, czy usługa odpowiada.</li>
-      </ul>
+  {% if error %}
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {% endif %}
+
+  {% if result %}
+    <section class="card mb-4" id="wynik">
+      <div class="card-body">
+        <div class="row align-items-center g-4">
+          <div class="col-md-4 text-center">
+            <div
+              class="gauge"
+              style="--p: {{ result.probability_percent }}; --c: {{ result.risk_color }};"
+              role="img"
+              aria-label="Prawdopodobieństwo {{ result.probability_percent }} procent"
+            >
+              <span>{{ "%.1f"|format(result.probability_percent) }}%</span>
+            </div>
+            <div class="mt-3">
+              <span class="badge rounded-pill {{ result.risk_badge }}">{{ result.risk_label }}</span>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <h2 class="h4">Wynik predykcji</h2>
+            <p class="mb-2">{{ result.classification_label }}</p>
+            <p class="text-muted mb-3">
+              Kolor wskaźnika oznacza ryzyko niskie (poniżej 33%), umiarkowane (od 33% do poniżej 66%)
+              albo wysokie (od 66%). Klasa dodatnia zaczyna się od prawdopodobieństwa 50%.
+            </p>
+            <p class="small text-muted mb-0">Wpis zapisano w historii pod numerem {{ result.id }}.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section class="card">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Parametry zdrowotne</h2>
+          <form method="post" action="/" autocomplete="off">
+            <div class="row g-3">
+              {% for field in fields %}
+                <div class="col-md-6">
+                  {% set current = ((form[field.name] ~ "")|replace(",", ".")) if field.name in form else "" %}
+                  {% if field.choices %}
+                    <div class="field-label">
+                      <label class="form-label" for="{{ field.name }}">{{ field.label }}</label>
+                      <span class="info-tip">
+                        <button
+                          type="button"
+                          class="info-tip-button"
+                          aria-describedby="{{ field.name }}-help"
+                          aria-label="Co oznaczają poziomy 0, 1, 2 i 3"
+                        >i</button>
+                        <span class="info-tip-panel" id="{{ field.name }}-help" role="tooltip">
+                          <strong class="info-tip-title">Wagi genetyczne</strong>
+                          <ul class="info-tip-list">
+                            {% for choice in field.choices %}
+                              <li>
+                                <strong>{{ choice.level }} — {{ choice.title }}</strong>
+                                <span>Waga {{ choice.weight_label }}. {{ choice.who }}</span>
+                              </li>
+                            {% endfor %}
+                          </ul>
+                        </span>
+                      </span>
+                    </div>
+                    <select class="form-select" id="{{ field.name }}" name="{{ field.name }}" required>
+                      <option value="" {% if current == "" %}selected{% endif %} disabled>Wybierz poziom</option>
+                      {% for choice in field.choices %}
+                        <option
+                          value="{{ choice.level }}"
+                          data-weight="{{ choice.weight_label }}"
+                          {% if current == choice.level|string %}selected{% endif %}
+                        >{{ choice.level }} — {{ choice.title }}</option>
+                      {% endfor %}
+                    </select>
+                  {% else %}
+                    <label class="form-label" for="{{ field.name }}">
+                      {{ field.label }}
+                      {% if field.unit %}<span class="text-muted">({{ field.unit }})</span>{% endif %}
+                    </label>
+                    <input
+                      class="form-control"
+                      type="number"
+                      id="{{ field.name }}"
+                      name="{{ field.name }}"
+                      min="{{ field.min }}"
+                      max="{{ field.max }}"
+                      step="{{ field.step }}"
+                      value="{{ form[field.name] if field.name in form else '' }}"
+                      required
+                    >
+                  {% endif %}
+                  <div class="form-text">{{ field.hint }}</div>
+                </div>
+              {% endfor %}
+            </div>
+            <p class="text-muted small mt-3 mb-0">
+              Wartość 0 w polach glukoza, ciśnienie, fałd skórny, insulina i BMI oznacza brak pomiaru,
+              tak jak w zbiorze treningowym. Liczba ciąż równa 0 zostaje zerem.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button type="submit" class="btn btn-teal">Oblicz ryzyko</button>
+              <button type="button" class="btn btn-outline-secondary" onclick="fillExample('niskie')">
+                Przykład niskiego ryzyka
+              </button>
+              <button type="button" class="btn btn-outline-secondary" onclick="fillExample('wysokie')">
+                Przykład wysokiego ryzyka
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
     </div>
-  </section>
+
+    <div class="col-lg-4">
+      <section class="card">
+        <div class="card-body">
+          <h2 class="h5">Model</h2>
+          <p class="small text-muted">
+            Regresja logistyczna uczona na pliku <code>diabetes.csv</code>.
+            Potok uzupełnia braki medianą i standaryzuje cechy.
+          </p>
+          {% if metrics %}
+            <ul class="list-unstyled small mb-3">
+              <li>Dokładność: {{ "%.1f"|format(metrics.accuracy * 100) }}%</li>
+              <li>Czułość: {{ "%.1f"|format(metrics.recall * 100) }}%</li>
+              <li>Precyzja: {{ "%.1f"|format(metrics.precision * 100) }}%</li>
+              <li>F1: {{ "%.1f"|format(metrics.f1 * 100) }}%</li>
+              <li>ROC AUC: {{ "%.3f"|format(metrics.roc_auc) }}</li>
+              <li>Zbiór testowy: {{ metrics.test_size }} z {{ metrics.rows }} wierszy</li>
+            </ul>
+            <p class="small text-muted mb-0">
+              Metryki pochodzą z podziału 80/20. Do predykcji służy model nauczony na wszystkich wierszach.
+            </p>
+          {% else %}
+            <p class="small text-muted mb-0">Brak zapisanych metryk modelu.</p>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const examples = {{ examples | tojson }};
+
+    function fillExample(name) {
+      const values = examples[name];
+    Object.entries(values).forEach(([key, value]) => {
+      const input = document.getElementById(key);
+      if (!input) {
+        return;
+      }
+      if (input.tagName === "SELECT") {
+        const options = [...input.options].filter((option) => option.dataset.weight !== undefined);
+        const nearest = options.reduce((best, option) => {
+          const diff = Math.abs(Number(option.dataset.weight) - Number(value));
+          return diff < best.diff ? { option, diff } : best;
+        }, { option: null, diff: Infinity });
+        if (nearest.option) {
+          input.value = nearest.option.value;
+        }
+        return;
+      }
+      input.value = value;
+    });
+    }
+  </script>
 {% endblock %}
