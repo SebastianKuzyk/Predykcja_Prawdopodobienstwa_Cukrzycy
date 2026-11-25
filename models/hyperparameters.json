@@ -1,0 +1,5 @@
+{
+  "logreg_c": 1.0,
+  "forest_n_estimators": 200,
+  "forest_max_depth": 6
+}

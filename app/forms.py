@@ -165,7 +165,37 @@ def format_validation_error(exc: ValidationError) -> str:
     return " ".join(messages)
 
 
-def parse_form(raw: dict[str, str]) -> PatientInput:
+def parse_hyperparameters(raw: dict[str, str]) -> dict[str, float | int]:
+    specs = [
+        ("logreg_c", "C regresji logistycznej", 0.01, 100, False),
+        ("forest_n_estimators", "Liczba drzew", 50, 400, True),
+        ("forest_max_depth", "Maksymalna głębokość lasu", 2, 20, True),
+    ]
+    parsed: dict[str, float | int] = {}
+    errors: list[str] = []
+    for name, label, minimum, maximum, integer in specs:
+        text = str(raw.get(name, "")).strip().replace(",", ".")
+        if text == "":
+            errors.append(f"Uzupełnij pole: {label}.")
+            continue
+        try:
+            number = float(text)
+        except ValueError:
+            errors.append(f"Pole „{label}” musi być liczbą.")
+            continue
+        if integer and not number.is_integer():
+            errors.append(f"Pole „{label}” musi być liczbą całkowitą.")
+            continue
+        if number < minimum or number > maximum:
+            errors.append(f"{label}: dozwolony zakres to {minimum}–{maximum}.")
+            continue
+        parsed[name] = int(number) if integer else number
+    if errors:
+        raise FormError(" ".join(errors))
+    return parsed
+
+
+def parse_form(raw: dict[str, str], pedigree_as_level: bool = True) -> PatientInput:
     parsed: dict[str, int | float] = {}
     errors: list[str] = []
 
@@ -181,7 +211,7 @@ def parse_form(raw: dict[str, str]) -> PatientInput:
         except ValueError:
             errors.append(f"Pole „{label}” musi być liczbą.")
             continue
-        if field.get("choices"):
+        if field.get("choices") and pedigree_as_level:
             if not number.is_integer():
                 errors.append(f"Pole „{label}” wymaga poziomu 0, 1, 2 albo 3.")
                 continue
@@ -191,6 +221,9 @@ def parse_form(raw: dict[str, str]) -> PatientInput:
                 errors.append(f"Pole „{label}” wymaga poziomu 0, 1, 2 albo 3.")
                 continue
             parsed[name] = choice["weight"]
+            continue
+        if field.get("choices"):
+            parsed[name] = number
             continue
         if field["integer"] and not number.is_integer():
             errors.append(f"Pole „{label}” musi być liczbą całkowitą.")

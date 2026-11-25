@@ -7,6 +7,7 @@ MODEL_DIR = Path(os.getenv("MODEL_DIR", BASE_DIR / "models"))
 CSV_PATH = Path(os.getenv("CSV_PATH", BASE_DIR / "diabetes.csv"))
 MODEL_PATH = MODEL_DIR / "diabetes_pipeline.joblib"
 METRICS_PATH = MODEL_DIR / "metrics.json"
+HYPERPARAMETERS_PATH = MODEL_DIR / "hyperparameters.json"
 
 
 def _database_url() -> str:

@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,8 @@ from app.db_models import Prediction
 from app.ml import predict_patient
 from app.risk import classification_label, describe_risk, probability_percent
 from app.schemas import PatientInput, PredictionRead
+
+logger = logging.getLogger(__name__)
 
 
 def to_read(row: Prediction) -> PredictionRead:
@@ -49,6 +53,7 @@ def create_prediction(db: Session, patient: PatientInput) -> PredictionRead:
     db.add(record)
     db.commit()
     db.refresh(record)
+    logger.info("Zapisano predykcję %s, prawdopodobieństwo %.3f.", record.id, probability)
     return to_read(record)
 
 

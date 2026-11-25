@@ -1,6 +1,7 @@
 import pytest
 
-from app.forms import EXAMPLES, FORM_FIELDS, FormError, parse_form
+from app.csv_io import parse_patients_csv
+from app.forms import EXAMPLES, FORM_FIELDS, FormError, parse_form, parse_hyperparameters
 from app.ml import FEATURES
 from app.risk import describe_risk
 from app.schemas import PatientInput
@@ -58,6 +59,9 @@ def test_home(client):
     assert "Oblicz ryzyko" in response.text
     assert "Wagi genetyczne" in response.text
     assert "Kuzyni pierwszego stopnia" in response.text
+    assert "Las losowy" in response.text
+    assert "Walidacja krzyżowa" in response.text or "walidacji krzyżowej" in response.text
+    assert "Hiperparametry" in response.text
 
 
 def test_form_requires_fields(client):
@@ -82,6 +86,7 @@ def test_comma_decimal_and_history(client):
     )
     assert response.status_code == 200
     assert "Wynik predykcji" in response.text
+    assert "Wpływ cech (SHAP)" in response.text
 
     history = client.get("/historia")
     assert history.status_code == 200
@@ -109,7 +114,50 @@ def test_api_rejects_out_of_range(client):
     assert response.status_code == 422
 
 
+def test_hyperparameters_reject_out_of_range():
+    with pytest.raises(FormError):
+        parse_hyperparameters(
+            {"logreg_c": "0", "forest_n_estimators": "200", "forest_max_depth": "6"}
+        )
+
+
+def test_csv_level_becomes_weight():
+    text = (
+        "pregnancies,glucose,blood_pressure,skin_thickness,insulin,bmi,diabetes_pedigree,age\n"
+        "1,89,66,23,94,28.1,3,21\n"
+    )
+    patients, messages = parse_patients_csv(text)
+    assert messages == []
+    assert patients[0].diabetes_pedigree == 0.5
+
+
 def test_health(client):
     response = client.get("/api/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_csv_upload_and_export(client):
+    body = (
+        "pregnancies,glucose,blood_pressure,skin_thickness,insulin,bmi,diabetes_pedigree,age\n"
+        "1,89,66,23,94,28.1,1,21\n"
+        "1,189,60,23,846,30.1,0.398,59\n"
+        "1,50,60,23,80,22,9,21\n"
+    )
+    response = client.post("/csv", files={"file": ("przypadki.csv", body, "text/csv")})
+    assert response.status_code == 200
+    assert "Zapisano 2 wiersze" in response.text
+    assert "Wiersz 4" in response.text
+
+    history = client.get("/historia")
+    assert "0.125" in history.text
+
+    exported = client.get("/api/predictions.csv")
+    assert exported.status_code == 200
+    assert "text/csv" in exported.headers["content-type"]
+    assert "diabetes_pedigree" in exported.text
+    assert "0.125" in exported.text
+
+    subset = client.get("/api/predictions.csv?subset=wysokie")
+    assert subset.status_code == 200
+    assert "probability" in subset.text

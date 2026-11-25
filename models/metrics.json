@@ -1,13 +1,54 @@
 {
-  "algorithm": "LogisticRegression",
-  "accuracy": 0.7077922077922078,
-  "precision": 0.6,
-  "recall": 0.5,
-  "f1": 0.5454545454545454,
-  "roc_auc": 0.812962962962963,
+  "selected": "LogisticRegression",
+  "selected_label": "Regresja logistyczna",
+  "selection_metric": "roc_auc_cv",
   "rows": 768,
   "train_size": 614,
   "test_size": 154,
+  "cv_folds": 5,
   "random_state": 42,
-  "trained_at": "2026-10-27T16:10:22+00:00"
+  "hyperparameters": {
+    "logreg_c": 1.0,
+    "forest_n_estimators": 200,
+    "forest_max_depth": 6
+  },
+  "models": [
+    {
+      "algorithm": "LogisticRegression",
+      "label": "Regresja logistyczna",
+      "holdout": {
+        "accuracy": 0.7077922077922078,
+        "precision": 0.6,
+        "recall": 0.5,
+        "f1": 0.5454545454545454,
+        "roc_auc": 0.812962962962963
+      },
+      "cv": {
+        "accuracy": 0.7882313741170198,
+        "precision": 0.7638075920023182,
+        "recall": 0.5747508305647842,
+        "f1": 0.6545454545454545,
+        "roc_auc": 0.8433637873754153
+      }
+    },
+    {
+      "algorithm": "RandomForest",
+      "label": "Las losowy",
+      "holdout": {
+        "accuracy": 0.7337662337662337,
+        "precision": 0.6511627906976745,
+        "recall": 0.5185185185185185,
+        "f1": 0.5773195876288659,
+        "roc_auc": 0.8103703703703703
+      },
+      "cv": {
+        "accuracy": 0.7703318672530988,
+        "precision": 0.7268644584434059,
+        "recall": 0.5655592469545959,
+        "f1": 0.6326117197009216,
+        "roc_auc": 0.8354263565891472
+      }
+    }
+  ],
+  "trained_at": "2026-11-20T12:47:54+00:00"
 }

@@ -13,6 +13,16 @@
   {% if error %}
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   {% endif %}
+  {% if notice %}
+    <div class="alert alert-success" role="status">{{ notice }}</div>
+  {% endif %}
+  {% if warnings %}
+    <div class="alert alert-warning" role="status">
+      {% for warning in warnings %}
+        <div>{{ warning }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
   {% if result %}
     <section class="card mb-4" id="wynik">
@@ -41,6 +51,25 @@
             <p class="small text-muted mb-0">Wpis zapisano w historii pod numerem {{ result.id }}.</p>
           </div>
         </div>
+        {% if explanations %}
+          <div class="mt-4">
+            <h3 class="h5">Wpływ cech (SHAP)</h3>
+            <p class="small text-muted">
+              Wartość dodatnia podnosi wynik modelu, ujemna go obniża. Długość paska pokazuje siłę wpływu tej cechy w tym zapytaniu.
+            </p>
+            <ul class="list-unstyled mb-0 shap-list">
+              {% for item in explanations %}
+                <li class="shap-row">
+                  <span class="shap-label">{{ item.label }}</span>
+                  <span class="shap-value">{{ "%+.3f"|format(item.value) }}</span>
+                  <span class="shap-track" aria-hidden="true">
+                    <span class="shap-bar {{ item.direction }}" style="width: {{ item.width }}%"></span>
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
       </div>
     </section>
   {% endif %}
@@ -128,32 +157,102 @@
     </div>
 
     <div class="col-lg-4">
-      <section class="card">
+      <section class="card mb-4">
         <div class="card-body">
-          <h2 class="h5">Model</h2>
+          <h2 class="h5">Modele</h2>
           <p class="small text-muted">
-            Regresja logistyczna uczona na pliku <code>diabetes.csv</code>.
+            Regresja logistyczna i las losowy uczą się na pliku <code>diabetes.csv</code>.
             Potok uzupełnia braki medianą i standaryzuje cechy.
+            Wygrywa model z wyższym ROC AUC z walidacji krzyżowej.
           </p>
-          {% if metrics %}
-            <ul class="list-unstyled small mb-3">
-              <li>Dokładność: {{ "%.1f"|format(metrics.accuracy * 100) }}%</li>
-              <li>Czułość: {{ "%.1f"|format(metrics.recall * 100) }}%</li>
-              <li>Precyzja: {{ "%.1f"|format(metrics.precision * 100) }}%</li>
-              <li>F1: {{ "%.1f"|format(metrics.f1 * 100) }}%</li>
-              <li>ROC AUC: {{ "%.3f"|format(metrics.roc_auc) }}</li>
-              <li>Zbiór testowy: {{ metrics.test_size }} z {{ metrics.rows }} wierszy</li>
-            </ul>
-            <p class="small text-muted mb-0">
-              Metryki pochodzą z podziału 80/20. Do predykcji służy model nauczony na wszystkich wierszach.
-            </p>
+          {% if metrics and metrics.selected_label %}
+            <p class="small mb-0">Do predykcji służy: <strong>{{ metrics.selected_label }}</strong>.</p>
           {% else %}
             <p class="small text-muted mb-0">Brak zapisanych metryk modelu.</p>
           {% endif %}
         </div>
       </section>
+      <section class="card">
+        <div class="card-body">
+          <h2 class="h5">Hiperparametry</h2>
+          <p class="small text-muted">Zapisanie przelicza oba modele i wybiera lepszy.</p>
+          <form method="post" action="/model">
+            <div class="mb-2">
+              <label class="form-label" for="logreg_c">C regresji logistycznej</label>
+              <input class="form-control" type="number" id="logreg_c" name="logreg_c" min="0.01" max="100" step="any" value="{{ hyperparameters.logreg_c }}" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label" for="forest_n_estimators">Liczba drzew</label>
+              <input class="form-control" type="number" id="forest_n_estimators" name="forest_n_estimators" min="50" max="400" step="1" value="{{ hyperparameters.forest_n_estimators }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="forest_max_depth">Maksymalna głębokość lasu</label>
+              <input class="form-control" type="number" id="forest_max_depth" name="forest_max_depth" min="2" max="20" step="1" value="{{ hyperparameters.forest_max_depth }}" required>
+            </div>
+            <button type="submit" class="btn btn-outline-secondary">Przelicz modele</button>
+          </form>
+        </div>
+      </section>
     </div>
   </div>
+
+  {% if metrics and metrics.models %}
+    <section class="card mt-4">
+      <div class="card-body">
+        <h2 class="h5">Porównanie modeli</h2>
+        <p class="small text-muted">
+          Podział 80/20 ({{ metrics.test_size }} z {{ metrics.rows }} wierszy) oraz {{ metrics.cv_folds }}-krotna walidacja krzyżowa na części uczącej.
+          Do predykcji służy model nauczony ponownie na wszystkich wierszach.
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Dokładność</th>
+                <th>Precyzja</th>
+                <th>Czułość</th>
+                <th>F1</th>
+                <th>ROC AUC</th>
+                <th>ROC AUC (CV)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for model in metrics.models %}
+                <tr{% if model.algorithm == metrics.selected %} class="table-active"{% endif %}>
+                  <td>
+                    {{ model.label }}
+                    {% if model.algorithm == metrics.selected %}<span class="badge text-bg-success">wybrany</span>{% endif %}
+                  </td>
+                  <td>{{ "%.1f"|format(model.holdout.accuracy * 100) }}%</td>
+                  <td>{{ "%.1f"|format(model.holdout.precision * 100) }}%</td>
+                  <td>{{ "%.1f"|format(model.holdout.recall * 100) }}%</td>
+                  <td>{{ "%.1f"|format(model.holdout.f1 * 100) }}%</td>
+                  <td>{{ "%.3f"|format(model.holdout.roc_auc) }}</td>
+                  <td>{{ "%.3f"|format(model.cv.roc_auc) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="card mt-4" id="csv">
+    <div class="card-body">
+      <h2 class="h5">Nowe przypadki z pliku CSV</h2>
+      <p class="small text-muted mb-3">
+        Kolumny: pregnancies, glucose, blood_pressure, skin_thickness, insulin, bmi, diabetes_pedigree, age.
+        Liczba całkowita 0–3 w kolumnie rodowodu oznacza poziom wagi genetycznej. Ułamek jest wagą.
+      </p>
+      <form method="post" action="/csv" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="hidden" name="next" value="home">
+        <input class="form-control" type="file" name="file" accept=".csv,text/csv" required>
+        <button type="submit" class="btn btn-teal">Wczytaj CSV</button>
+      </form>
+    </div>
+  </section>
 
   <script>
     const examples = {{ examples | tojson }};

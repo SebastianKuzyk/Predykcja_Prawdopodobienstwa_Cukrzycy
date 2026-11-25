@@ -11,6 +11,7 @@ Dane wejściowe modelu to plik `diabetes.csv` (8 cech klinicznych i kolumna `Out
 - HTML5 i Bootstrap 5
 - SQLite
 - scikit-learn
+- SHAP
 - Docker
 
 ## Uruchomienie lokalne
@@ -60,7 +61,8 @@ docker compose up --build
 ```text
 app/
   main.py         trasy stron i API
-  ml.py           trening i predykcja
+  ml.py           trening, porównanie modeli, SHAP
+  csv_io.py       wczytywanie i zapis CSV
   service.py      zapis i odczyt historii
   db_models.py    tabela predictions
   database.py     połączenie SQLite
@@ -76,16 +78,22 @@ docker-compose.yml
 
 ## Model
 
-Potok: zamiana zer oznaczających brak pomiaru na braki, imputacja medianą, standaryzacja, regresja logistyczna.
+Potok: zamiana zer oznaczających brak pomiaru na braki, imputacja medianą, standaryzacja, a potem regresja logistyczna albo las losowy.
 
 Zero oznacza brak pomiaru dla glukozy, ciśnienia, fałdu skórnego, insuliny i BMI. Liczba ciąż równa zero jest prawdziwą wartością.
 
-Metryki (dokładność, czułość, precyzja, F1, ROC AUC) są liczone na 20% wierszy odłożonych przed oceną (`random_state=42`). Do predykcji służy model nauczony ponownie na całym pliku. Wyniki widać na stronie głównej i w `models/metrics.json`.
+Oba algorytmy są oceniane na podziale 80/20 (`random_state=42`) i w 5-krotnej walidacji krzyżowej. Metryki to dokładność, precyzja, czułość, F1 i ROC AUC. Do predykcji służy model z wyższym ROC AUC z walidacji krzyżowej, nauczony ponownie na całym pliku. Hiperparametry (C, liczba drzew, maksymalna głębokość) ustawia się na stronie głównej. Wyniki są w `models/metrics.json`.
+
+Pojedyncze zapytanie z formularza dostaje wyjaśnienie SHAP: które cechy podniosły, a które obniżyły wynik modelu.
+
+Nowe przypadki można dodać formularzem albo plikiem CSV. Historia i podzbiór wysokiego ryzyka (prawdopodobieństwo co najmniej 50%) pobierają się jako CSV.
 
 ## API
 
 - `POST /api/predict` — predykcja i zapis
 - `GET /api/predictions` — historia
+- `GET /api/predictions.csv` — historia jako CSV
+- `GET /api/predictions.csv?subset=wysokie` — podzbiór wysokiego ryzyka
 - `GET /api/health` — stan aplikacji
 - `GET /docs` — dokumentacja interaktywna
 

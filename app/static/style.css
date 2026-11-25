@@ -162,3 +162,53 @@ body {
   margin-top: 0.12rem;
   color: #52606d;
 }
+
+.shap-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.shap-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 4.5rem 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.shap-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.shap-track {
+  display: block;
+  height: 0.55rem;
+  background: #e7eeec;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.shap-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.shap-bar.up {
+  background: #b42318;
+}
+
+.shap-bar.down {
+  background: #067647;
+}
+
+@media (max-width: 576px) {
+  .shap-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .shap-track {
+    grid-column: 1 / -1;
+  }
+}
